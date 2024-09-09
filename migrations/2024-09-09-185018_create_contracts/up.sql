@@ -1,16 +1,16 @@
 CREATE TABLE parties (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY NOT NULL,
   name VARCHAR NOT NULL
 );
 
 CREATE TABLE framework_agreements (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY NOT NULL,
   title VARCHAR NOT NULL,
   effective_date DATE NOT NULL
 );
 
 CREATE TABLE contracts (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY NOT NULL,
   framework_agreement_id INTEGER NOT NULL,
   title VARCHAR NOT NULL,
   effective_date DATE NOT NULL,

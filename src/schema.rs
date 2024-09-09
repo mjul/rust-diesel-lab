@@ -2,7 +2,7 @@
 
 diesel::table! {
     contracts (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         framework_agreement_id -> Integer,
         title -> Text,
         effective_date -> Date,
@@ -13,7 +13,7 @@ diesel::table! {
 
 diesel::table! {
     framework_agreements (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         title -> Text,
         effective_date -> Date,
     }
@@ -21,7 +21,7 @@ diesel::table! {
 
 diesel::table! {
     parties (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         name -> Text,
     }
 }
