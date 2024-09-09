@@ -1,0 +1,9 @@
+[package]
+name = "rust-diesel-lab"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+diesel = {version="2.2.4", features=["sqlite", "returning_clauses_for_sqlite_3_35"]}
+dotenvy = { version = "0.15.7", features = ["cli"] }
+
