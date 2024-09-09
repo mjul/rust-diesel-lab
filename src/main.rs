@@ -4,7 +4,6 @@ use std::env;
 pub mod models;
 pub mod schema;
 
-
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
@@ -13,14 +12,13 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-
 fn main() {
     println!("Hello, world!");
 
+    use self::models::Party;
     use self::schema::parties::dsl::*;
-    use self::models::{Party};
-    
-    let mut conn : SqliteConnection = establish_connection();
+
+    let mut conn: SqliteConnection = establish_connection();
     let results = parties
         .limit(5)
         .select(Party::as_select())
@@ -31,5 +29,4 @@ fn main() {
     for party in results {
         println!("{}, {}", party.id, party.name);
     }
-    
 }

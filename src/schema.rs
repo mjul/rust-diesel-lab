@@ -28,8 +28,4 @@ diesel::table! {
 
 diesel::joinable!(contracts -> framework_agreements (framework_agreement_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    contracts,
-    framework_agreements,
-    parties,
-);
+diesel::allow_tables_to_appear_in_same_query!(contracts, framework_agreements, parties,);
