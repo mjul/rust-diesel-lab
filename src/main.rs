@@ -1,3 +1,4 @@
+use clap::{Parser, Subcommand};
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
@@ -23,7 +24,7 @@ fn list_parties(conn: &mut SqliteConnection) {
 
     println!("Parties (count={})", results.len());
     for party in results {
-        println!("{}, {}", party.id, party.name);
+        println!("  {}, {}", party.id, party.name);
     }
 }
 
@@ -39,17 +40,36 @@ fn create_party(conn: &mut SqliteConnection, name: &str) -> Party {
         .expect("Error saving new party")
 }
 
+/// List all data in the database
+fn list_data(conn: &mut SqliteConnection) {
+    list_parties(conn);
+}
+
+/// Populate the database with somme parties and contracts
+fn populate_data(conn: &mut SqliteConnection) {
+    let _buyer = create_party(conn, "Bui Buyer");
+    let _seller = create_party(conn, "Shel Seller");
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    List,
+    Populate,
+}
+
 fn main() {
-    println!("Hello, world!");
-
-    use self::schema::parties::dsl::*;
-
     let mut conn: SqliteConnection = establish_connection();
 
-    list_parties(&mut conn);
-
-    let buyer = create_party(&mut conn, "Bui Buyer");
-    let seller = create_party(&mut conn, "Shel Seller");
-
-    list_parties(&mut conn);
+    let cli = Cli::parse();
+    match cli.command {
+        Command::List => list_data(&mut conn),
+        Command::Populate => populate_data(&mut conn),
+    }
 }
