@@ -1,6 +1,16 @@
 # Rust Diesel Lab
 Taking the Diesel ORM for a spin.
 
+# Quick Start
+This repo build a command line app that manipulates a SQLite database.
+Try it out:
+
+```
+    diesel migration run
+    cargo run list
+    cargo run populate
+    cargo run list
+```
 
 # Setup 
 
