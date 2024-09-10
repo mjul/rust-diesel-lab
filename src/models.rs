@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use diesel::prelude::*;
 
 /// A contract party.
@@ -23,6 +24,7 @@ pub struct NewParty<'a> {
 pub struct Contract {
     pub id: i32,
     pub title: String,
+    pub effective_date: NaiveDate,
 }
 
 /// A framework agreement. A [Contract] may be a specific instance this.
@@ -32,4 +34,13 @@ pub struct Contract {
 pub struct FrameworkAgreement {
     pub id: i32,
     pub title: String,
+    pub effective_date: NaiveDate,
+}
+
+/// A new [FrameworkAgreement].
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::framework_agreements)]
+pub struct NewFrameworkAgreement<'a> {
+    pub title: &'a str,
+    pub effective_date: &'a NaiveDate,
 }

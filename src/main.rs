@@ -1,10 +1,11 @@
+use chrono::NaiveDate;
 use clap::{Parser, Subcommand};
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
 pub mod models;
 pub mod schema;
-use crate::models::{Contract, FrameworkAgreement, NewParty, Party};
+use crate::models::{Contract, FrameworkAgreement, NewFrameworkAgreement, NewParty, Party};
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
@@ -38,7 +39,10 @@ fn list_framework_agreements(conn: &mut SqliteConnection) {
 
     println!("Framework agreements (count={})", results.len());
     for fa in results {
-        println!("  {:>5}, {:<40}", fa.id, fa.title);
+        println!(
+            "  {:>5}, {:>10}, {:<40}",
+            fa.id, fa.effective_date, fa.title
+        );
     }
 }
 
@@ -52,7 +56,10 @@ fn list_contracts(conn: &mut SqliteConnection) {
 
     println!("Contracts (count={})", results.len());
     for contract in results {
-        println!("  {:>5}, {:<40}, ({})", contract.id, contract.title, "TODO");
+        println!(
+            "  {:>5}, {:>10}, {:<40}, ({})",
+            contract.id, contract.effective_date, contract.title, "TODO"
+        );
     }
 }
 
@@ -68,6 +75,25 @@ fn create_party(conn: &mut SqliteConnection, name: &str) -> Party {
         .expect("Error saving new party")
 }
 
+fn create_framework_agreement(
+    conn: &mut SqliteConnection,
+    title: &str,
+    effective_date: &NaiveDate,
+) -> FrameworkAgreement {
+    use crate::schema::framework_agreements;
+
+    let new_fa = NewFrameworkAgreement {
+        title,
+        effective_date,
+    };
+
+    diesel::insert_into(framework_agreements::table)
+        .values(&new_fa)
+        .returning(FrameworkAgreement::as_returning())
+        .get_result(conn)
+        .expect("Error saving new framework agreement")
+}
+
 /// List all data in the database
 fn list_data(conn: &mut SqliteConnection) {
     list_parties(conn);
@@ -79,6 +105,11 @@ fn list_data(conn: &mut SqliteConnection) {
 fn populate_data(conn: &mut SqliteConnection) {
     let _buyer = create_party(conn, "Bui Buyer");
     let _seller = create_party(conn, "Shel Seller");
+    let _fa = create_framework_agreement(
+        conn,
+        "MSA v1.1",
+        &NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
+    );
 }
 
 #[derive(Parser, Debug)]
