@@ -4,7 +4,7 @@ use dotenvy::dotenv;
 use std::env;
 pub mod models;
 pub mod schema;
-use crate::models::{NewParty, Party};
+use crate::models::{Contract, FrameworkAgreement, NewParty, Party};
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
@@ -17,14 +17,42 @@ pub fn establish_connection() -> SqliteConnection {
 fn list_parties(conn: &mut SqliteConnection) {
     use self::schema::parties::dsl::*;
     let results = parties
-        .limit(10)
+        .limit(100)
         .select(Party::as_select())
         .load(conn)
         .expect("Error loading parties");
 
     println!("Parties (count={})", results.len());
     for party in results {
-        println!("  {}, {}", party.id, party.name);
+        println!("  {:>5}, {}", party.id, party.name);
+    }
+}
+
+fn list_framework_agreements(conn: &mut SqliteConnection) {
+    use self::schema::framework_agreements::dsl::*;
+    let results = framework_agreements
+        .limit(100)
+        .select(FrameworkAgreement::as_select())
+        .load(conn)
+        .expect("Error loading framework agreements");
+
+    println!("Framework agreements (count={})", results.len());
+    for fa in results {
+        println!("  {:>5}, {:<40}", fa.id, fa.title);
+    }
+}
+
+fn list_contracts(conn: &mut SqliteConnection) {
+    use self::schema::contracts::dsl::*;
+    let results = contracts
+        .limit(100)
+        .select(Contract::as_select())
+        .load(conn)
+        .expect("Error loading contracts");
+
+    println!("Contracts (count={})", results.len());
+    for contract in results {
+        println!("  {:>5}, {:<40}, ({})", contract.id, contract.title, "TODO");
     }
 }
 
@@ -43,6 +71,8 @@ fn create_party(conn: &mut SqliteConnection, name: &str) -> Party {
 /// List all data in the database
 fn list_data(conn: &mut SqliteConnection) {
     list_parties(conn);
+    list_framework_agreements(conn);
+    list_contracts(conn);
 }
 
 /// Populate the database with somme parties and contracts

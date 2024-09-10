@@ -15,3 +15,21 @@ pub struct Party {
 pub struct NewParty<'a> {
     pub name: &'a str,
 }
+
+/// A contract party.
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = crate::schema::contracts)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct Contract {
+    pub id: i32,
+    pub title: String,
+}
+
+/// A framework agreement. A [Contract] may be a specific instance this.
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = crate::schema::framework_agreements)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct FrameworkAgreement {
+    pub id: i32,
+    pub title: String,
+}
