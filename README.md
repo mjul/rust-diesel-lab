@@ -78,3 +78,31 @@ with *e.g.* `NaiveDate` for SQL time types like `DATE`.  This is used
 for effective dates on the contracts and framework agreements. See
 [`models.rs`](src/models.rs).
 
+## Foreign Key Relations
+
+See the guide to Diesel relations here https://diesel.rs/guides/relations.html
+
+Child-to-parent relationships can be marked with the 
+`belongs_to` derive macro, _e.g._ `#[diesel(belongs_to(FrameworkAgreement))]`.
+These relationships are always child to parent.
+
+You can query these with an inner join, which gives you a tuple of 
+database model instances for each join:
+
+```rust
+    // Note how we inner join to get the corresponding Framework Agreement
+    let results = self::schema::contracts::table
+        .inner_join(self::schema::framework_agreements::table)
+        .select((Contract::as_select(), FrameworkAgreement::as_select()))
+        .load::<(Contract, FrameworkAgreement)>(conn)
+        .expect("Error loading contracts");
+```
+
+Apparently, it is not possible to have a relation like a Contract associated to two 
+Party instances from the same Party relation (table) this way, so it is quite limited.
+
+Diesel has an Associations concept for other relationships. It
+potentially improves query performance by combining data in memory.
+
+
+
