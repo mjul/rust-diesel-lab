@@ -5,7 +5,9 @@ use dotenvy::dotenv;
 use std::env;
 pub mod models;
 pub mod schema;
-use crate::models::{Contract, FrameworkAgreement, NewFrameworkAgreement, NewParty, Party};
+use crate::models::{
+    Contract, FrameworkAgreement, NewContract, NewFrameworkAgreement, NewParty, Party,
+};
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
@@ -47,18 +49,18 @@ fn list_framework_agreements(conn: &mut SqliteConnection) {
 }
 
 fn list_contracts(conn: &mut SqliteConnection) {
-    use self::schema::contracts::dsl::*;
-    let results = contracts
-        .limit(100)
-        .select(Contract::as_select())
-        .load(conn)
+    // Note how we inner join to get the corresponding Framework Agreement
+    let results = self::schema::contracts::table
+        .inner_join(self::schema::framework_agreements::table)
+        .select((Contract::as_select(), FrameworkAgreement::as_select()))
+        .load::<(Contract, FrameworkAgreement)>(conn)
         .expect("Error loading contracts");
 
     println!("Contracts (count={})", results.len());
-    for contract in results {
+    for (contract, fa) in results {
         println!(
             "  {:>5}, {:>10}, {:<40}, ({})",
-            contract.id, contract.effective_date, contract.title, "TODO"
+            contract.id, contract.effective_date, contract.title, fa.title
         );
     }
 }
@@ -94,6 +96,32 @@ fn create_framework_agreement(
         .expect("Error saving new framework agreement")
 }
 
+/// Create a contract instance for a [FrameworkAgreement].
+fn create_contract_for_fa(
+    conn: &mut SqliteConnection,
+    framework_agreement: &FrameworkAgreement,
+    title: &str,
+    effective_date: &NaiveDate,
+    buyer: &Party,
+    seller: &Party,
+) -> Contract {
+    use crate::schema::contracts;
+
+    let new_contract = NewContract {
+        title,
+        effective_date,
+        buyer_id: buyer.id,
+        seller_id: seller.id,
+        framework_agreement_id: framework_agreement.id,
+    };
+
+    diesel::insert_into(contracts::table)
+        .values(&new_contract)
+        .returning(Contract::as_returning())
+        .get_result(conn)
+        .expect("Error saving new contract")
+}
+
 /// List all data in the database
 fn list_data(conn: &mut SqliteConnection) {
     list_parties(conn);
@@ -103,12 +131,33 @@ fn list_data(conn: &mut SqliteConnection) {
 
 /// Populate the database with somme parties and contracts
 fn populate_data(conn: &mut SqliteConnection) {
-    let _buyer = create_party(conn, "Bui Buyer");
-    let _seller = create_party(conn, "Shel Seller");
-    let _fa = create_framework_agreement(
+    let buyer = create_party(conn, "Bui Buyer");
+    let seller = create_party(conn, "Shel Seller");
+    let msa10 = create_framework_agreement(
+        conn,
+        "MSA v1.0",
+        &NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
+    );
+    let msa11 = create_framework_agreement(
         conn,
         "MSA v1.1",
-        &NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
+        &NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+    );
+    let _c_a = create_contract_for_fa(
+        conn,
+        &msa10,
+        "Foobar 2023 License",
+        &NaiveDate::from_ymd_opt(2023, 7, 1).unwrap(),
+        &buyer,
+        &seller,
+    );
+    let _c_b = create_contract_for_fa(
+        conn,
+        &msa11,
+        "Foobar 2024 License",
+        &NaiveDate::from_ymd_opt(2024, 7, 1).unwrap(),
+        &buyer,
+        &seller,
     );
 }
 
