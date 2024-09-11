@@ -49,18 +49,48 @@ fn list_framework_agreements(conn: &mut SqliteConnection) {
 }
 
 fn list_contracts(conn: &mut SqliteConnection) {
-    // Note how we inner join to get the corresponding Framework Agreement
-    let results = self::schema::contracts::table
+    let all_fas = self::schema::framework_agreements::table
+        .select(FrameworkAgreement::as_select())
+        .load(conn)
+        .expect("Error loading framework agreements");
+
+    let all_parties = self::schema::parties::table
+        .select(Party::as_select())
+        .load(conn)
+        .expect("Error loading parties");
+
+    let (buyers, sellers) = diesel::alias!(
+        self::schema::parties as buyer,
+        self::schema::parties as seller
+    );
+
+    let result_c_fa = self::schema::contracts::table
         .inner_join(self::schema::framework_agreements::table)
         .select((Contract::as_select(), FrameworkAgreement::as_select()))
         .load::<(Contract, FrameworkAgreement)>(conn)
         .expect("Error loading contracts");
 
-    println!("Contracts (count={})", results.len());
-    for (contract, fa) in results {
+    let result_c_fa_b = Contract::belonging_to(&all_parties)
+        .inner_join(self::schema::framework_agreements::table)
+        .inner_join(
+            self::schema::parties::table
+                .on(self::schema::parties::id.eq(self::schema::contracts::buyer_id)),
+        )
+        .select((
+            Contract::as_select(),
+            FrameworkAgreement::as_select(),
+            Party::as_select(),
+        ))
+        .load(conn)
+        .expect("Error loading contracts");
+
+    let result = result_c_fa_b;
+
+    println!("Contracts (count={})", result.len());
+    for (contract, fa, buyer) in result {
         println!(
-            "  {:>5}, {:>10}, {:<40}, ({})",
-            contract.id, contract.effective_date, contract.title, fa.title
+            "  {:>5}, {:>10}, {:<20}, ({:<20}), B: {:<20}",
+            contract.id, contract.effective_date, contract.title, fa.title, buyer.name
         );
     }
 }

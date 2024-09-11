@@ -98,11 +98,32 @@ database model instances for each join:
         .expect("Error loading contracts");
 ```
 
+You can use explicit inner joins to select the keys if the fields does not have the
+default names:
+
+```rust
+    let result_c_fa_b = Contract::belonging_to(&all_parties)
+        .inner_join(self::schema::framework_agreements::table)
+        .inner_join(
+            self::schema::parties::table
+                .on(self::schema::parties::id.eq(self::schema::contracts::buyer_id)),
+        )
+        .select((
+            Contract::as_select(),
+            FrameworkAgreement::as_select(),
+            Party::as_select(),
+        ))
+        .load(conn)
+        .expect("Error loading contracts");
+```
+
 Apparently, it is not possible to have a relation like a Contract associated to two 
 Party instances from the same Party relation (table) this way, so it is quite limited.
 
-Diesel has an Associations concept for other relationships. It
-potentially improves query performance by combining data in memory.
+Joining with multiple foreign keys into the same table is possible via
+the `alias!` macro, see https://docs.diesel.rs/2.2.x/diesel/macro.alias.html
+
+
 
 
 
