@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use clap::{Parser, Subcommand};
 use diesel::prelude::*;
 use dotenvy::dotenv;
-use std::env;
+use std::{collections::HashMap, env};
 pub mod models;
 pub mod schema;
 use crate::models::{
@@ -49,7 +49,8 @@ fn list_framework_agreements(conn: &mut SqliteConnection) {
 }
 
 fn list_contracts(conn: &mut SqliteConnection) {
-    let all_fas = self::schema::framework_agreements::table
+    // We and use Contract::belonging_to(&all_fas) as an alternate query
+    let _all_fas = self::schema::framework_agreements::table
         .select(FrameworkAgreement::as_select())
         .load(conn)
         .expect("Error loading framework agreements");
@@ -59,17 +60,21 @@ fn list_contracts(conn: &mut SqliteConnection) {
         .load(conn)
         .expect("Error loading parties");
 
-    let (buyers, sellers) = diesel::alias!(
+    let (_buyers, _sellers) = diesel::alias!(
         self::schema::parties as buyer,
         self::schema::parties as seller
     );
 
-    let result_c_fa = self::schema::contracts::table
+    // Here is a simple join via the belongs_to derive macro association
+    let _result_c_fa = self::schema::contracts::table
         .inner_join(self::schema::framework_agreements::table)
         .select((Contract::as_select(), FrameworkAgreement::as_select()))
         .load::<(Contract, FrameworkAgreement)>(conn)
         .expect("Error loading contracts");
 
+    // This is the best we can do with inner joins:
+    // if we have two associations from contracts to parties (buyer and seller)
+    // the Associations trait does not work
     let result_c_fa_b = Contract::belonging_to(&all_parties)
         .inner_join(self::schema::framework_agreements::table)
         .inner_join(
@@ -84,13 +89,22 @@ fn list_contracts(conn: &mut SqliteConnection) {
         .load(conn)
         .expect("Error loading contracts");
 
+    // If we cannot inner join the second party (seller),
+    // we can join it manually
+    let party_by_id: HashMap<i32, Party> =
+        all_parties.into_iter().map(|p| (p.id.clone(), p)).collect();
+
     let result = result_c_fa_b;
 
     println!("Contracts (count={})", result.len());
     for (contract, fa, buyer) in result {
+        // manually join the seller (challenge: find a better way to do this)
+        let seller = party_by_id
+            .get(&contract.seller_id)
+            .expect("Seller must exist in Parties");
         println!(
-            "  {:>5}, {:>10}, {:<20}, ({:<20}), B: {:<20}",
-            contract.id, contract.effective_date, contract.title, fa.title, buyer.name
+            "  {:>5}, Eff: {:>10}, FA: {:<10}, {:<20}, B: {:<20}, S: {:<20}",
+            contract.id, contract.effective_date, fa.title, contract.title, buyer.name, seller.name
         );
     }
 }
