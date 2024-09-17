@@ -1,14 +1,17 @@
 # Rust Diesel Lab
-Taking the Diesel ORM for a spin.
+Taking the Diesel ORM (object-relational mapper) for a spin.
+Specifically, database setup and migrations and using a SQLite database with Rust. 
 
-Diesel provides synchronous database access and mapping between Rust types and database relations.
+## What is Diesel
+[Diesel](https://diesel.rs/) provides synchronous database access and mapping between Rust types and database relations.
 It has relatively small overhead in terms of code as just a few derive macros are needed.
-Diesel provides provides compile-time checking for the program to database mappings.
+Diesel provides compile-time checking for the program to database mappings.
 It also provides database migrations via SQL "up" and "down" scripts.
 
-Another frequently used ORM for Rust is SeaORM. Unlike Diesel, it is async and takes
+## SeaORM, The Other Popular ORM
+Another frequently used ORM for Rust is [SeaORM](https://www.sea-ql.org/SeaORM/). Unlike Diesel, it is async and takes
 a more dynamic approach, checking the database and code correspondence at runtime instead
-of compile time. It appears require more code for the mappings than Diesel. Its migration model is an 
+of compile time. It appears to require more code for the mappings than Diesel. Its migration model is an 
 embedded Rust DSL rather than SQL, making the database migrations "more" portable 
 across different database back-ends.
 
